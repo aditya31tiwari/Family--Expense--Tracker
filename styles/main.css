@@ -1,0 +1,70 @@
+/* Hide Streamlit chrome */
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }
+
+/* Page Background (preserve your previous background) */
+[data-testid="stAppViewContainer"] {
+    background-color: #444cf755;
+    opacity: 0.8;
+    background-image:
+      repeating-radial-gradient(circle at 0 0, transparent 0, #000000 10px),
+      repeating-linear-gradient(#00000055, #000000);
+    /* allow full-bleed background while content is controlled below */
+}
+
+/* Make the app "wide" but keep a comfortable readable content width */
+:root {
+    /* Change this if you want a wider or narrower central column */
+    --content-max-width: 1200px;
+    --page-side-padding: 2rem;
+}
+
+/* Ensure the app view container can use full width */
+[data-testid="stAppViewContainer"] {
+    max-width: 100% !important;
+    padding-left: var(--page-side-padding) !important;
+    padding-right: var(--page-side-padding) !important;
+    box-sizing: border-box;
+}
+
+/* Control the readable content area inside the app.
+   This keeps everything centered but allows the page to expand across the screen. */
+.block-container,
+[data-testid="stBlock"] {
+    max-width: var(--content-max-width) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+/* Small screens — reduce side padding and use full width */
+@media (max-width: 900px) {
+    :root { --page-side-padding: 1rem; --content-max-width: 100%; }
+    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+}
+
+/* Make KPI/columns breathe — add more horizontal space for three-column layouts */
+.css-1y4p8pa, .stColumns, .stColumn { /* generic targets — safe and minimal */
+    gap: 1.25rem !important;
+}
+
+/* Dataframe/table styling: allow horizontal scrolling if table is wide */
+[data-testid="stDataFrame"] > div {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Buttons, cards and panels: add consistent margins so things don't feel cramped */
+.stButton, .stMetric, .stExpander {
+    margin-bottom: 1rem !important;
+}
+
+/* Optional: subtle max width for very wide monitors (keeps layout readable) */
+/* If you prefer fully edge-to-edge, remove this block */
+@media (min-width: 1600px) {
+    .block-container { max-width: 1400px !important; }
+}
