@@ -99,7 +99,9 @@ if selected == "Data Entry":
             )
             expense_description = st.text_input("Description (optional)").title()
             expense_value = st.number_input("Value", min_value=0)
-            expense_date = st.date_input("Date", value=datetime.date.today())
+            
+            # --- CHANGE 1: Indian Date Format for Input ---
+            expense_date = st.date_input("Date", value=datetime.date.today(), format="DD/MM/YYYY")
 
             expense_frequency = st.selectbox(
                 "Payment frequency",
@@ -186,7 +188,14 @@ elif selected == "Data Overview":
                 cols[0].write(expense.value)
                 cols[1].write(expense.category)
                 cols[2].write(expense.description)
-                cols[3].write(expense.date)
+                
+                # --- CHANGE 2: Format Aggregated Table Date ---
+                # Check if it's a date object before formatting
+                date_display = expense.date
+                if isinstance(date_display, datetime.date):
+                    date_display = date_display.strftime("%d-%m-%Y")
+                cols[3].write(date_display)
+                
                 cols[4].write(getattr(expense, "frequency", "One-time"))
 
                 if cols[5].button(f"Delete agg {idx}"):
@@ -202,13 +211,13 @@ elif selected == "Data Overview":
         col2.metric("Total Expenditure", f"{total_expenditure}")
         col3.metric("Remaining Balance", f"{remaining_balance}")
 
-        # --- CLEANED UP PAYMENT LOG ---
+        # --- PAYMENT LOG ---
         st.header("Payment Log")
         with st.expander("View Detailed Payment History"):
             if not expense_tracker.expense_log:
                 st.info("No payments recorded yet.")
             else:
-                # 1. Define Headers for the Log Table
+                # 1. Headers
                 log_ratios = [2, 2, 2, 1, 1, 1]
                 log_headers = st.columns(log_ratios)
                 log_headers[0].write("**Date**")
@@ -218,27 +227,34 @@ elif selected == "Data Overview":
                 log_headers[4].write("**Freq**")
                 log_headers[5].write("**Action**")
 
-                # 2. Display the Log Entries with Delete Buttons
+                # 2. Display Log Entries
                 for idx, log_entry in enumerate(list(expense_tracker.expense_log)):
                     cols = st.columns(log_ratios)
-                    cols[0].write(log_entry.date)
+                    
+                    # --- CHANGE 3: Format Log Table Date ---
+                    log_date_display = log_entry.date
+                    if isinstance(log_date_display, datetime.date):
+                        log_date_display = log_date_display.strftime("%d-%m-%Y")
+                    cols[0].write(log_date_display)
+                    
                     cols[1].write(getattr(log_entry, "paid_by", "Unknown"))
                     cols[2].write(log_entry.category)
                     cols[3].write(log_entry.value)
                     cols[4].write(log_entry.frequency)
-                    # Unique key for every button to prevent errors
+                    
                     if cols[5].button("Delete", key=f"del_log_{idx}"):
                         expense_tracker.delete_log_entry(log_entry)
                         st.success("Log entry deleted.")
                         st.rerun()
 
-                st.write("---") # Separator line
+                st.write("---")
 
-                # 3. Prepare Data for Download (Hidden from view, used only for CSV)
+                # 3. Prepare CSV Data (Apply Indian Format here too)
+                # --- CHANGE 4: Format Date inside the Dataframe for CSV ---
                 df = pd.DataFrame(
                     [
                         {
-                            "Date": e.date,
+                            "Date": e.date.strftime("%d-%m-%Y") if isinstance(e.date, datetime.date) else e.date,
                             "Paid By": getattr(e, "paid_by", "Unknown"),
                             "Category": e.category,
                             "Description": e.description,
@@ -253,11 +269,11 @@ elif selected == "Data Overview":
                 df.to_csv(csv_buffer, index=False)
                 csv_data = csv_buffer.getvalue().encode("utf-8")
 
-                # 4. Download Button at the Bottom
+                # 4. Download Button
                 st.download_button(
                     label="Download Full Log (CSV)",
                     data=csv_data,
-                    file_name=f"expense_log_{datetime.date.today().isoformat()}.csv",
+                    file_name=f"expense_log_{datetime.date.today().strftime('%d-%m-%Y')}.csv",
                     mime="text/csv",
                 )
 
@@ -285,7 +301,6 @@ elif selected == "Data Visualization":
             fig.patch.set_facecolor("none")
             st.pyplot(fig)
     else:
-        # Fixed Indentation Error Here
         st.info(
             "Start by adding family members to track your expenses together!"
         )
