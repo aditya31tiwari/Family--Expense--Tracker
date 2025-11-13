@@ -1,25 +1,25 @@
-/* 1. Clean, Aesthetic Font (Uses your system's best sans-serif font) */
-html, body, [class*="st-"] {
-    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* 2. Move Content Up & Center It */
+/* 1. Move Content Up */
 .block-container {
-    padding-top: 2rem !important; /* Reduces the top gap */
-    padding-bottom: 1rem !important;
-    max-width: 90% !important; /* Uses most of the screen width */
+    padding-top: 1rem !important; /* This pulls the whole app up */
+    padding-bottom: 5rem !important;
 }
 
-/* 3. Hide Streamlit Menu/Footer/Header */
+/* 2. Hide Streamlit Standard Menu */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 header { visibility: hidden; }
 
-/* 4. Your Background (Kept exactly as you had it) */
+/* 3. Background (Kept exactly as you like it) */
 [data-testid="stAppViewContainer"] {
     background-color: #444cf755;
     opacity: 0.8;
     background-image:
       repeating-radial-gradient(circle at 0 0, transparent 0, #000000 10px),
       repeating-linear-gradient(#00000055, #000000);
+}
+
+/* 4. Aesthetic Fonts - APPLIED SAFELY */
+/* We only target headers and paragraphs, protecting the icons */
+h1, h2, h3, p, label, .stButton button {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
