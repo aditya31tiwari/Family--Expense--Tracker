@@ -11,7 +11,7 @@ import io
 
 # Streamlit configuration
 st.set_page_config(page_title="Family Expense Tracker", page_icon="💰", layout="wide")
-st.title("")  # Clear the default title
+
 
 # Path Settings
 current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
