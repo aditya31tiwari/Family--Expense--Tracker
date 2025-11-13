@@ -9,7 +9,6 @@ import io
 
 # Streamlit configuration
 st.set_page_config(page_title="Family Expense Tracker", page_icon="💰", layout="wide")
-# st.title("")
 
 # Path Settings
 current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
@@ -79,11 +78,9 @@ if selected == "Data Entry":
     # Sidebar for adding expenses
     st.header("Add Expenses")
     with st.expander("Add Expenses"):
-        # --- CHANGE: Check for members first ---
         if not expense_tracker.members:
             st.warning("Please add at least one family member above before adding expenses.")
         else:
-            # --- CHANGE: Select who is paying ---
             member_names = [m.name for m in expense_tracker.members]
             paid_by = st.selectbox("Paid By", member_names)
 
@@ -116,14 +113,13 @@ if selected == "Data Entry":
                      st.error("Please select a payment frequency")
                 else:
                     try:
-                        # --- CHANGE: Pass 'paid_by' to the function ---
                         expense_tracker.merge_similar_category(
                             expense_value,
                             expense_category,
                             expense_description,
                             expense_date,
                             expense_frequency,
-                            paid_by, 
+                            paid_by,
                         )
                         st.success("Expense added successfully!")
                     except ValueError as e:
@@ -138,8 +134,6 @@ elif selected == "Data Overview":
     else:
         st.header("Family Members")
         
-        # --- FIX: ALIGNMENT FOR FAMILY MEMBERS ---
-        # Giving 'Action' more space (last column)
         col_ratios_members = [1.5, 1.5, 1, 2] 
         
         (
@@ -155,7 +149,7 @@ elif selected == "Data Overview":
         family_delete_column.write("**Action**")
 
         for member in expense_tracker.members:
-            cols = st.columns(col_ratios_members) # Use same ratio loop
+            cols = st.columns(col_ratios_members)
             cols[0].write(member.name)
             cols[1].write("Earning" if member.earning_status else "Not Earning")
             cols[2].write(member.earnings)
@@ -208,17 +202,44 @@ elif selected == "Data Overview":
         col2.metric("Total Expenditure", f"{total_expenditure}")
         col3.metric("Remaining Balance", f"{remaining_balance}")
 
-        # --- CHANGE: LOG INSIDE EXPANDER + 'PAID BY' COLUMN ---
+        # --- CLEANED UP PAYMENT LOG ---
         st.header("Payment Log")
         with st.expander("View Detailed Payment History"):
             if not expense_tracker.expense_log:
                 st.info("No payments recorded yet.")
             else:
+                # 1. Define Headers for the Log Table
+                log_ratios = [2, 2, 2, 1, 1, 1]
+                log_headers = st.columns(log_ratios)
+                log_headers[0].write("**Date**")
+                log_headers[1].write("**Paid By**")
+                log_headers[2].write("**Category**")
+                log_headers[3].write("**Value**")
+                log_headers[4].write("**Freq**")
+                log_headers[5].write("**Action**")
+
+                # 2. Display the Log Entries with Delete Buttons
+                for idx, log_entry in enumerate(list(expense_tracker.expense_log)):
+                    cols = st.columns(log_ratios)
+                    cols[0].write(log_entry.date)
+                    cols[1].write(getattr(log_entry, "paid_by", "Unknown"))
+                    cols[2].write(log_entry.category)
+                    cols[3].write(log_entry.value)
+                    cols[4].write(log_entry.frequency)
+                    # Unique key for every button to prevent errors
+                    if cols[5].button("Delete", key=f"del_log_{idx}"):
+                        expense_tracker.delete_log_entry(log_entry)
+                        st.success("Log entry deleted.")
+                        st.rerun()
+
+                st.write("---") # Separator line
+
+                # 3. Prepare Data for Download (Hidden from view, used only for CSV)
                 df = pd.DataFrame(
                     [
                         {
                             "Date": e.date,
-                            "Paid By": getattr(e, "paid_by", "Unknown"), # Added
+                            "Paid By": getattr(e, "paid_by", "Unknown"),
                             "Category": e.category,
                             "Description": e.description,
                             "Value": e.value,
@@ -227,33 +248,18 @@ elif selected == "Data Overview":
                         for e in expense_tracker.expense_log
                     ]
                 )
-
-                st.dataframe(df)
-
+                
                 csv_buffer = io.StringIO()
                 df.to_csv(csv_buffer, index=False)
                 csv_data = csv_buffer.getvalue().encode("utf-8")
 
+                # 4. Download Button at the Bottom
                 st.download_button(
-                    label="Download log (CSV)",
+                    label="Download Full Log (CSV)",
                     data=csv_data,
                     file_name=f"expense_log_{datetime.date.today().isoformat()}.csv",
                     mime="text/csv",
                 )
-
-                st.write("Delete specific log entries:")
-                # Updated columns to include 'Paid By'
-                for idx, log_entry in enumerate(list(expense_tracker.expense_log)):
-                    cols = st.columns([2, 2, 2, 1, 1, 1])
-                    cols[0].write(log_entry.date)
-                    cols[1].write(getattr(log_entry, "paid_by", "Unknown"))
-                    cols[2].write(log_entry.category)
-                    cols[3].write(log_entry.value)
-                    cols[4].write(log_entry.frequency)
-                    if cols[5].button(f"Delete log {idx}"):
-                        expense_tracker.delete_log_entry(log_entry)
-                        st.success("Log entry deleted.")
-                        st.rerun()
 
 elif selected == "Data Visualization":
     expense_data = [
@@ -279,6 +285,7 @@ elif selected == "Data Visualization":
             fig.patch.set_facecolor("none")
             st.pyplot(fig)
     else:
+        # Fixed Indentation Error Here
         st.info(
             "Start by adding family members to track your expenses together!"
         )
