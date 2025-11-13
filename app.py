@@ -282,5 +282,3 @@ elif selected == "Data Visualization":
         st.info(
             "Start by adding family members to track your expenses together!"
         )
-            "Start by adding family members to track your expenses together!"
-        )
