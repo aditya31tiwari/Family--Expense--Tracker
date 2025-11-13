@@ -134,6 +134,3 @@ class FamilyExpenseTracker:
         return total_expenditure
 if __name__ == "__main__":
     expense_tracker = FamilyExpenseTracker()
-
-if __name__ == "__main__":
-    expense_tracker = FamilyExpenseTracker()
