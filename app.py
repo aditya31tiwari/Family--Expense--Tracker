@@ -1,5 +1,3 @@
-# app.py
-
 import streamlit as st
 from main import FamilyExpenseTracker
 import matplotlib.pyplot as plt
@@ -11,7 +9,7 @@ import io
 
 # Streamlit configuration
 st.set_page_config(page_title="Family Expense Tracker", page_icon="💰", layout="wide")
-
+# st.title("")  # <--- FIX 1: Commented this out so the title moves up
 
 # Path Settings
 current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
@@ -103,26 +101,31 @@ if selected == "Data Entry":
         expense_value = st.number_input("Value", min_value=0)
         expense_date = st.date_input("Date", value=datetime.date.today())
 
-        # NEW: Payment frequency selector
+        # --- FIX 2: Added "Monthly" and made default empty ---
         expense_frequency = st.selectbox(
             "Payment frequency",
-            ("One-time", "Quarterly", "Yearly"),
-            index=0,
+            ("One-time", "Monthly", "Quarterly", "Yearly"), # Added Monthly
+            index=None, # Starts empty
+            placeholder="Select frequency...",
         )
 
         if st.button("Add Expense"):
-            try:
-                # Add the expense (keeps aggregated view) and also appends raw log
-                expense_tracker.merge_similar_category(
-                    expense_value,
-                    expense_category,
-                    expense_description,
-                    expense_date,
-                    expense_frequency,
-                )
-                st.success("Expense added successfully!")
-            except ValueError as e:
-                st.error(str(e))
+            # Check if user forgot to select frequency
+            if not expense_frequency:
+                 st.error("Please select a payment frequency")
+            else:
+                try:
+                    # Add the expense (keeps aggregated view) and also appends raw log
+                    expense_tracker.merge_similar_category(
+                        expense_value,
+                        expense_category,
+                        expense_description,
+                        expense_date,
+                        expense_frequency,
+                    )
+                    st.success("Expense added successfully!")
+                except ValueError as e:
+                    st.error(str(e))
 
 elif selected == "Data Overview":
     # Display family members
@@ -161,6 +164,10 @@ elif selected == "Data Overview":
                 "Currently, no expenses have been added. Get started by clicking the 'Add Expenses' from the Data Entry Tab"
             )
         else:
+            # --- FIX 3: Used ratios so columns align better ---
+            # [Value, Category, Description, Date, Freq, Delete]
+            col_ratios = [1, 2, 3, 1.5, 1.5, 1]
+            
             (
                 value_column,
                 category_column,
@@ -168,7 +175,8 @@ elif selected == "Data Overview":
                 date_column,
                 frequency_column,
                 expense_delete_column,
-            ) = st.columns(6)
+            ) = st.columns(col_ratios) # Changed from st.columns(6)
+            
             value_column.write("**Value**")
             category_column.write("**Category**")
             description_column.write("**Description**")
@@ -178,14 +186,17 @@ elif selected == "Data Overview":
 
             # Use enumerate to create unique delete buttons
             for idx, expense in enumerate(expense_tracker.expense_list):
-                value_column.write(expense.value)
-                category_column.write(expense.category)
-                description_column.write(expense.description)
+                # Must use the same ratios inside the loop!
+                cols = st.columns(col_ratios) 
+                
+                cols[0].write(expense.value)
+                cols[1].write(expense.category)
+                cols[2].write(expense.description)
                 # Aggregated entry might not have a meaningful single date, show placeholder
-                date_column.write(expense.date)
-                frequency_column.write(getattr(expense, "frequency", "One-time"))
+                cols[3].write(expense.date)
+                cols[4].write(getattr(expense, "frequency", "One-time"))
 
-                if expense_delete_column.button(f"Delete agg {idx}"):
+                if cols[5].button(f"Delete agg {idx}"):
                     expense_tracker.delete_expense(expense)
                     st.rerun()
 
