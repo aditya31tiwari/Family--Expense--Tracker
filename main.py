@@ -1,5 +1,3 @@
-# main.py
-
 class FamilyMember:
     def __init__(self, name, earning_status=True, earnings=0):
         self.name = name
@@ -14,7 +12,8 @@ class FamilyMember:
 
 
 class Expense:
-    def __init__(self, value, category, description, date, frequency="One-time"):
+    # --- CHANGE: Added paid_by parameter ---
+    def __init__(self, value, category, description, date, frequency="One-time", paid_by="Unknown"):
         """
         frequency: "One-time", "Quarterly", or "Yearly"
         """
@@ -23,11 +22,12 @@ class Expense:
         self.description = description
         self.date = date
         self.frequency = frequency
+        self.paid_by = paid_by # New field
 
     def __str__(self):
         return (
             f"Value: {self.value}, Category: {self.category}, Description: {self.description}, "
-            f"Date: {self.date}, Frequency: {self.frequency}"
+            f"Date: {self.date}, Frequency: {self.frequency}, Paid By: {self.paid_by}"
         )
 
 
@@ -62,16 +62,17 @@ class FamilyExpenseTracker:
         return total_earnings
 
     # --- Expenses / Log ---
-    def add_expense(self, value, category, description, date, frequency="One-time"):
+    # --- CHANGE: Added paid_by argument ---
+    def add_expense(self, value, category, description, date, frequency="One-time", paid_by="Unknown"):
         if value == 0:
             raise ValueError("Value cannot be zero")
         if not category.strip():
             raise ValueError("Please choose a category")
 
-        expense = Expense(value, category, description, date, frequency)
+        expense = Expense(value, category, description, date, frequency, paid_by)
         self.expense_list.append(expense)
         # Always append to the raw log as well
-        self.expense_log.append(Expense(value, category, description, date, frequency))
+        self.expense_log.append(Expense(value, category, description, date, frequency, paid_by))
 
     def delete_expense(self, expense):
         """Delete from aggregated expense_list (used by aggregated table delete)."""
@@ -80,10 +81,7 @@ class FamilyExpenseTracker:
 
     def delete_log_entry(self, log_entry):
         """
-        Delete a single raw log entry and propagate the change to the aggregated list:
-        - Remove the log entry
-        - Subtract its value from the aggregated expense for that category
-        - If aggregated value becomes <= 0, remove that aggregated entry
+        Delete a single raw log entry and propagate the change to the aggregated list.
         """
         if log_entry in self.expense_log:
             # Remove from raw log
@@ -105,11 +103,10 @@ class FamilyExpenseTracker:
                     except ValueError:
                         pass
 
-    def merge_similar_category(self, value, category, description, date, frequency="One-time"):
+    # --- CHANGE: Added paid_by argument ---
+    def merge_similar_category(self, value, category, description, date, frequency="One-time", paid_by="Unknown"):
         """
         Keep merge-by-category for the aggregated view, but append a raw log entry only once.
-        If category already exists -> update aggregator and append a raw log entry.
-        If category is new -> call add_expense(...) which already adds both aggregator and raw log.
         """
         if value == 0:
             raise ValueError("Value cannot be zero")
@@ -126,16 +123,17 @@ class FamilyExpenseTracker:
             existing_expense.value += value
             if description:
                 existing_expense.description = description
-            # Append single raw log entry for this submission
-            self.expense_log.append(Expense(value, category, description, date, frequency))
+            # Append single raw log entry for this submission (with the user name)
+            self.expense_log.append(Expense(value, category, description, date, frequency, paid_by))
         else:
-            # Create aggregated entry and raw log via add_expense (add_expense already appends to expense_log)
-            self.add_expense(value, category, description, date, frequency)
+            # Create aggregated entry and raw log via add_expense
+            self.add_expense(value, category, description, date, frequency, paid_by)
 
     def calculate_total_expenditure(self):
         total_expenditure = sum(expense.value for expense in self.expense_list)
         return total_expenditure
-
+if __name__ == "__main__":
+    expense_tracker = FamilyExpenseTracker()
 
 if __name__ == "__main__":
     expense_tracker = FamilyExpenseTracker()
