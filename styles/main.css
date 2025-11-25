@@ -1,25 +1,70 @@
-/* 1. Move Content Up */
+/* ====== CLEAN + SAFE main.css ====== */
+
+/* 1. Move Content Up / preserve bottom spacing */
 .block-container {
-    padding-top: 1rem !important; /* This pulls the whole app up */
-    padding-bottom: 5rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 4rem !important;
 }
 
-/* 2. Hide Streamlit Standard Menu */
+/* 2. Hide Streamlit Default Menu (optional but clean) */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 header { visibility: hidden; }
 
-/* 3. Background (Kept exactly as you like it) */
+/* 3. Softer Background — uses ::before so content doesn't get translucent */
 [data-testid="stAppViewContainer"] {
-    background-color: #444cf755;
-    opacity: 0.8;
-    background-image:
-      repeating-radial-gradient(circle at 0 0, transparent 0, #000000 10px),
-      repeating-linear-gradient(#00000055, #000000);
+    position: relative;
+    overflow: visible;
 }
 
-/* 4. Aesthetic Fonts - APPLIED SAFELY */
-/* We only target headers and paragraphs, protecting the icons */
+/* Background layer only (texture softened) */
+[data-testid="stAppViewContainer"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+
+    /* Base color */
+    background-color: #0b0c0d;
+
+    /* Subtle pattern (not overwhelming) */
+    background-image:
+      radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.45));
+
+    background-size: 18px 18px, cover;
+    opacity: 0.22;  /* adjust between 0.12 – 0.4 based on darkness */
+    filter: blur(0.4px);
+}
+
+/* 4. Slight overlay behind the content for contrast */
+.stApp .block-container {
+    background-color: rgba(0,0,0,0.32);  /* improves text legibility */
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+/* 5. Clean Fonts without breaking theme colors */
 h1, h2, h3, p, label, .stButton button {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    color: inherit !important;  /* let theme decide color */
+}
+
+/* 6. Button aesthetics */
+.stButton > button {
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* 7. Responsive tweaks */
+@media (max-width: 768px) {
+    [data-testid="stAppViewContainer"]::before {
+        opacity: 0.15; /* softer on small screens */
+    }
+    
+    .stApp .block-container {
+        background-color: rgba(0,0,0,0.25);
+        padding: 0.6rem;
+        border-radius: 8px;
+    }
 }
