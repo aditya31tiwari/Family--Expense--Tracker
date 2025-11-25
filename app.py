@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for better responsiveness and styling
+# Custom CSS for better responsiveness and styling (kept inside app only)
 st.markdown("""
 <style>
     /* Main container */
@@ -198,7 +198,14 @@ if selected == "Data Entry":
                                 member_name, earning_status, earnings
                             )
                             st.success(f"✅ Member '{member_name}' added!")
-                        st.rerun()
+                        # safe rerun
+                        try:
+                            st.experimental_rerun()
+                        except Exception:
+                            try:
+                                st.rerun()
+                            except Exception:
+                                pass
                     except ValueError as e:
                         st.error(f"❌ {str(e)}")
 
@@ -274,7 +281,13 @@ if selected == "Data Entry":
                                 paid_by,
                             )
                             st.success(f"✅ Expense of ₹{expense_value:,.0f} added!")
-                            st.rerun()
+                            try:
+                                st.experimental_rerun()
+                            except Exception:
+                                try:
+                                    st.rerun()
+                                except Exception:
+                                    pass
                         except ValueError as e:
                             st.error(f"❌ {str(e)}")
 
@@ -343,7 +356,13 @@ elif selected == "Overview":
                         if member:
                             expense_tracker.delete_family_member(member)
                             st.success(f"✅ Deleted!")
-                            st.rerun()
+                            try:
+                                st.experimental_rerun()
+                            except Exception:
+                                try:
+                                    st.rerun()
+                                except Exception:
+                                    pass
         
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -384,7 +403,13 @@ elif selected == "Overview":
                             if expense.category == category:
                                 expense_tracker.delete_expense(expense)
                                 st.success(f"✅ Deleted!")
-                                st.rerun()
+                                try:
+                                    st.experimental_rerun()
+                                except Exception:
+                                    try:
+                                        st.rerun()
+                                    except Exception:
+                                        pass
                                 break
         
         st.markdown("<br>", unsafe_allow_html=True)
@@ -396,6 +421,7 @@ elif selected == "Overview":
                 st.info("📝 No payment records yet.")
             else:
                 log_data = []
+                # headers for dataframe display
                 for log_entry in expense_tracker.expense_log:
                     date_display = log_entry.date.strftime("%d-%m-%Y") if isinstance(log_entry.date, datetime.date) else log_entry.date
                     log_data.append({
@@ -423,6 +449,43 @@ elif selected == "Overview":
                     type="primary",
                     use_container_width=True
                 )
+
+                # --- RESTORED: per-row Delete buttons (robust) ---
+                log_ratios = [2, 2, 2, 1, 1, 1]
+                # iterate with index so button keys are stable
+                for idx, log_entry in enumerate(list(expense_tracker.expense_log)):
+                    cols = st.columns(log_ratios)
+                    # date
+                    log_date_display = log_entry.date
+                    if isinstance(log_date_display, datetime.date):
+                        log_date_display = log_date_display.strftime("%d-%m-%Y")
+                    cols[0].write(log_date_display)
+                    cols[1].write(getattr(log_entry, "paid_by", "Unknown"))
+                    cols[2].write(log_entry.category)
+                    cols[3].write(log_entry.value)
+                    cols[4].write(log_entry.frequency)
+
+                    # Delete button: robust deletion using backend-aware method
+                    btn_key = f"del_log_{idx}"
+                    if cols[5].button("Delete", key=btn_key):
+                        try:
+                            txn_id = getattr(log_entry, "id", None)
+                            # call delete_log_entry (main.py has robust implementation)
+                            ok = expense_tracker.delete_log_entry(log_entry)
+                            if ok:
+                                st.success("Log entry deleted.")
+                            else:
+                                st.error("Could not delete the log entry (no match).")
+                        except Exception as e:
+                            st.error(f"Delete failed: {e}")
+                        # safe rerun
+                        try:
+                            st.experimental_rerun()
+                        except Exception:
+                            try:
+                                st.rerun()
+                            except Exception:
+                                pass
 
 # ==================== DATA VISUALIZATION ====================
 elif selected == "Analytics":
