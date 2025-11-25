@@ -9,6 +9,11 @@ import io
 import plotly.express as px
 import plotly.graph_objects as go
 
+if st.button("🔁 Reset session (recreate tracker)"):
+    if "expense_tracker" in st.session_state:
+        del st.session_state["expense_tracker"]
+    st.experimental_rerun()
+
 # Streamlit configuration
 st.set_page_config(
     page_title="Family Expense Tracker", 
