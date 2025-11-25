@@ -9,7 +9,6 @@ import io
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # Streamlit configuration
 st.set_page_config(
     page_title="Family Expense Tracker", 
@@ -128,16 +127,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Path Settings
-current_dir = Path(__file__).parent if "__file__" in globals() else Path.cwd()
-css_file = current_dir / "styles" / "main.css"
-
-# Load CSS if exists
-try:
-    with open(css_file) as f:
-        st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
-except FileNotFoundError:
-    pass
 
 # Initialize session state
 if "expense_tracker" not in st.session_state:
